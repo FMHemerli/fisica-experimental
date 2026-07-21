@@ -31,9 +31,10 @@ DATA_FILE = Path(__file__).resolve().parents[1] / "data" / "stefan_boltzmann.csv
 @dataclass
 class StefanBoltzmannResult:
     table: pd.DataFrame
-    nominal_resistance: object  # R_0 (ufloat)
-    exponent: object            # fitted Stefan-Boltzmann exponent (ufloat)
+    nominal_resistance: object   # R_0 (ufloat)
+    exponent: object            # primary (weighted) Stefan-Boltzmann exponent (ufloat)
     intercept: object           # fit intercept (ufloat)
+    exponent_methods: pd.DataFrame  # exponent under different fit assumptions
 
 
 def load_measurements(path: Path | str = DATA_FILE) -> pd.DataFrame:
@@ -68,6 +69,43 @@ def linear_fit(x, y) -> tuple:
     return slope, intercept
 
 
+def exponent_methods(log_t, log_u) -> pd.DataFrame:
+    """Refit the exponent under different error assumptions.
+
+    The original notebook never fit this exponent, so there is no reference value
+    to check against. The log-log *inputs*, however, match the original digit for
+    digit, and the exponent is method-sensitive: reporting several fits makes the
+    real (method-choice) spread explicit instead of hiding it behind one number.
+    """
+    xn = unp.nominal_values(log_t)
+    yn, ys = unp.nominal_values(log_u), unp.std_devs(log_u)
+    xs = unp.std_devs(log_t)
+
+    weighted = np.polyfit(xn, yn, 1, w=1 / ys)[0]
+    ordinary = np.polyfit(xn, yn, 1)[0]
+
+    # Errors-in-variables (accounts for the uncertainty on log T as well).
+    import warnings
+    from scipy import odr
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        model = odr.Model(lambda b, x: b[0] * x + b[1])
+        fit = odr.ODR(odr.RealData(xn, yn, sx=xs, sy=ys), model, beta0=[4.0, 0.0]).run()
+    orthogonal = fit.beta[0]
+
+    return pd.DataFrame(
+        {
+            "method": [
+                "weighted (y errors) - primary",
+                "ordinary least squares",
+                "orthogonal distance (x and y errors)",
+            ],
+            "exponent": [weighted, ordinary, orthogonal],
+        }
+    )
+
+
 def run(path: Path | str = DATA_FILE) -> StefanBoltzmannResult:
     df = load_measurements(path)
 
@@ -82,6 +120,7 @@ def run(path: Path | str = DATA_FILE) -> StefanBoltzmannResult:
     log_t = unp.log(temperature)
     log_u = unp.log(thermopile)
     exponent, intercept = linear_fit(log_t, log_u)
+    methods = exponent_methods(log_t, log_u)
 
     table = pd.DataFrame(
         {
@@ -94,4 +133,5 @@ def run(path: Path | str = DATA_FILE) -> StefanBoltzmannResult:
         }
     )
     return StefanBoltzmannResult(table=table, nominal_resistance=r0,
-                                 exponent=exponent, intercept=intercept)
+                                 exponent=exponent, intercept=intercept,
+                                 exponent_methods=methods)
