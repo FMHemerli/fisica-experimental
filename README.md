@@ -1,5 +1,12 @@
 # fisica-experimental
 
+![Jupyter](https://img.shields.io/badge/Jupyter-F37626?logo=jupyter&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?logo=numpy&logoColor=white)
+![SciPy](https://img.shields.io/badge/SciPy-8CAAE6?logo=scipy&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?logo=matplotlib&logoColor=white)
+![uncertainties](https://img.shields.io/badge/uncertainties-error_propagation-8A2BE2)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+
 Computational analysis for Modern Physics laboratory experiments (CCENS-UFES).
 Each experiment turns raw measurements into physical constants with full error
 propagation via [`uncertainties`](https://pythonhosted.org/uncertainties/).
