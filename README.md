@@ -1,4 +1,4 @@
-# fisica-experimental
+# fisica-experimental — Modern Physics Laboratory Analysis
 
 ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?logo=jupyter&logoColor=white)
 ![NumPy](https://img.shields.io/badge/NumPy-013243?logo=numpy&logoColor=white)
